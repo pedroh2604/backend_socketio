@@ -1,5 +1,5 @@
 {
-  "name": "socket.io",
+  "name": "socket app",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
@@ -10,6 +10,7 @@
   "author": "Pedro Silva",
   "license": "ISC",
   "dependencies": {
-    "mongoose": "^5.4.13"
+    "mongoose": "^5.4.13",
+    "socket.io": "^2.2.0"
   }
 }

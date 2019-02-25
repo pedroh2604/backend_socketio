@@ -2,16 +2,18 @@
 
 const Conversation = require('../models/conversation');
 const Message = require('../models/essage');
+const User = require('../models/user');
 
 exports.getConversations = (req, res, next) => {
 	Conversation.find({participants: req.user._id})
 	select('_id')
-	.exect((err, conversations) => {
+	.exec((err, conversations) => {
 		if (err) {
 			res.send({error: err});
 			return next(err);
 		}
 
+		// Set up empty array to hold conversations + most recent message
 		let fullConversations = [];
 
 		conversations.forEach((conversation) => {
@@ -91,24 +93,67 @@ exports.newConversation = (req, res, next) => {
 			return next();
 		});
 	});
+};
+
+export.sendReply = (req, res, next) => {
+	const reply  = new Message({
+		conversationId = req.params.conversationId,
+		body: req.body.composedMessage,
+		author: req.user._id
+	});
+
+	reply.save((err, sentReply) => {
+		if (err) {
+			res.send({error: err});
+			return next(err);
+		}
+
+		res.status(200).json({message: 'Reply successfully sent!'});
+		return next();
+	});
+};
 
 
-	export.sendReply = (req, res, next) => {
-		const reply  = new Message({
-			conversationId = req.params.conversationId,
-			body: req.body.composedMessage,
-			author: req.user._id
+exports.deleteConversation = (req, res, next) => {
+	Conversation.findOneAndRemove({
+		$and: [
+			{'_id': req.params.conversationId},
+			{'participants': req.user._id}
+		]
+	})
+	.exec(result => {
+		res.status(200).json({
+			message: 'Coversation was removed'
 		});
-
-		reply.save((err, sentReply) => {
-			if (err) {
-				res.send({error: err});
-				return next(err);
-			}
-
-			res.status(200).json({message: 'Reply successfully send!'});
-			return(next);
+		return next();
+	})
+	.then(e => {
+		res.send({
+			error: e
 		});
-	};
+		return next(e);
+	});
+};
 
-}
+exports.updateMessage = (req, res, next) => {
+	Conversation.find({
+		$and: [
+			{'id': req.params.messageId},
+			{'author': req.user._id}
+		]
+	})
+	.exec()
+	.then(message => {
+		message.body = req.body.composedMessage;
+		res.status(200).json({
+			message: 'Message was updated'
+		});
+		return next();
+	})
+	.catch(e => {
+		res.send({
+			error: e;
+		});
+		return next(e);
+	});
+};
